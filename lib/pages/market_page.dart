@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../api/api.dart';
 import '../constants.dart';
@@ -43,7 +43,7 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(48),
           child: AppBar(
-            brightness: Brightness.light,
+            systemOverlayStyle: SystemUiOverlayStyle.light,
             iconTheme: IconThemeData(color: Colors.black),
             elevation: 1,
             centerTitle: true,
@@ -62,7 +62,7 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
           height: double.infinity,
           color: Colors.white,
           child: SafeArea(
-            child: Container(
+            child: SizedBox(
                 width: double.infinity,
                 height: double.infinity,
                 child: Column(
@@ -154,6 +154,46 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
     }
   }
 
+  List<MarketRecord> sortRecords(int tabIndex, List<MarketRecord> records) {
+    if (sortColumn == SortColumn.none) {
+      if (tabIndex == 0) {
+        records.sort((a, b) {
+          if (a.getBasePriority() == b.getBasePriority()) {
+            return a.getQuotePriority().compareTo(b.getQuotePriority());
+          } else {
+            return a.getBasePriority().compareTo(b.getBasePriority());
+          }
+        });
+      } else {
+        records.sort((a, b) {
+          return b.volume.compareTo(a.volume);
+        });
+      }
+    } else if (sortColumn == SortColumn.symbol) {
+      records.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? '${a.base}${a.quote}${a.type}'
+                .compareTo('${b.base}${b.quote}${b.type}')
+            : '${b.base}${b.quote}${b.type}'
+                .compareTo('${a.base}${a.quote}${a.type}');
+      });
+    } else if (sortColumn == SortColumn.lastPrice) {
+      records.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? a.lastPrice.compareTo(b.lastPrice)
+            : b.lastPrice.compareTo(a.lastPrice);
+      });
+    } else if (sortColumn == SortColumn.volume) {
+      records.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? a.volume.compareTo(b.volume)
+            : b.volume.compareTo(a.volume);
+      });
+    }
+
+    return records;
+  }
+
   Widget buildTable(int tabIndex) {
     final filteredRecords = marketRecords.where((e) {
       if (tabIndex == 1) {
@@ -172,41 +212,7 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
             return e.base.contains(keyword);
           }).toList();
 
-    if (sortColumn == SortColumn.none) {
-      if (tabIndex == 0) {
-        searchedRecords.sort((a, b) {
-          if (a.getBasePriority() == b.getBasePriority()) {
-            return a.getQuotePriority().compareTo(b.getQuotePriority());
-          } else {
-            return a.getBasePriority().compareTo(b.getBasePriority());
-          }
-        });
-      } else {
-        searchedRecords.sort((a, b) {
-          return b.volume.compareTo(a.volume);
-        });
-      }
-    } else if (sortColumn == SortColumn.symbol) {
-      searchedRecords.sort((a, b) {
-        return sortRule == SortRule.ascending
-            ? '${a.base}${a.quote}${a.type}'
-                .compareTo('${b.base}${b.quote}${b.type}')
-            : '${b.base}${b.quote}${b.type}'
-                .compareTo('${a.base}${a.quote}${a.type}');
-      });
-    } else if (sortColumn == SortColumn.lastPrice) {
-      searchedRecords.sort((a, b) {
-        return sortRule == SortRule.ascending
-            ? a.lastPrice.compareTo(b.lastPrice)
-            : b.lastPrice.compareTo(a.lastPrice);
-      });
-    } else if (sortColumn == SortColumn.volume) {
-      searchedRecords.sort((a, b) {
-        return sortRule == SortRule.ascending
-            ? a.volume.compareTo(b.volume)
-            : b.volume.compareTo(a.volume);
-      });
-    }
+    final sortedRecords = sortRecords(tabIndex, searchedRecords);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10),
@@ -242,16 +248,16 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
             color: Colors.grey,
           ),
           Expanded(
-              child: searchedRecords.isEmpty
+              child: sortedRecords.isEmpty
                   ? Center(
                       child: Text('No results found'),
                     )
                   : ListView.builder(
                       itemBuilder: (context, index) {
                         return MarketRecordItem(
-                            marketRecord: searchedRecords[index]);
+                            marketRecord: sortedRecords[index]);
                       },
-                      itemCount: searchedRecords.length,
+                      itemCount: sortedRecords.length,
                     )),
         ],
       ),
