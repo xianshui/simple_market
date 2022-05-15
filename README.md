@@ -1,6 +1,12 @@
-# simplemarket
+# simple market
 
-A new Flutter project.
+A  Flutter demo project.
+
+## Screenshots
+
+![](https://github.com/xianshui/simple_market/blob/b7433a4aa6bd79c6d513bd2523a4ee1034b50331/screenshots/sc0.png)
+![](https://github.com/xianshui/simple_market/blob/b7433a4aa6bd79c6d513bd2523a4ee1034b50331/screenshots/sc1.png)
+![](https://github.com/xianshui/simple_market/blob/b7433a4aa6bd79c6d513bd2523a4ee1034b50331/screenshots/sc2.png)
 
 ## Getting Started
 
