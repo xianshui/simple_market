@@ -11,14 +11,18 @@ class MarketPage extends StatefulWidget {
   State<MarketPage> createState() => _MarketPageState();
 }
 
+enum SortColumn { none, symbol, lastPrice, volume }
+enum SortRule { defaulting, ascending, descending }
+
 class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
   List<String> titles = ['All', 'Spot', 'Futures'];
   List<MarketRecord> marketRecords = [];
-  //String keyword = '';
   TextEditingController keywordController = TextEditingController();
 
   late TabController tabController =
       TabController(vsync: this, length: titles.length, initialIndex: 0);
+  SortColumn sortColumn = SortColumn.none;
+  SortRule sortRule = SortRule.defaulting;
 
   @override
   void initState() {
@@ -48,7 +52,7 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
               'Market',
               style: TextStyle(
                 color: Colors.black,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
@@ -89,8 +93,10 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
                     color: tabController.index == titles.indexOf(titles[i])
                         ? Colors.black
                         : Colors.black54,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                    fontWeight: tabController.index == titles.indexOf(titles[i])
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    fontSize: 15,
                   ),
                 )),
         onTap: (index) {
@@ -117,14 +123,12 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
             color: AppColors.grey,
           )),
           filled: true,
-          hintText: 'Search record',
+          hintText: 'Search with base name',
           hintStyle: TextStyle(color: Color(0x80707070)),
           fillColor: Colors.transparent,
         ),
         onChanged: (str) {
-          setState(() {
-            //keyword = str;
-          });
+          setState(() {});
         },
       ),
     );
@@ -147,6 +151,23 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
         : filteredRecords.where((e) {
             return e.base.contains(keyword);
           }).toList();
+    List<MarketRecord> sortedRecords;
+
+    if (sortColumn == SortColumn.none) {
+      if (tabIndex == 0) {
+        searchedRecords.sort((a, b) {
+          if (a.getBasePriority() == b.getBasePriority()) {
+            return a.getQuotePriority().compareTo(b.getQuotePriority());
+          } else {
+            return a.getBasePriority().compareTo(b.getBasePriority());
+          }
+        });
+      } else {
+        searchedRecords.sort((a, b) {
+          return b.volume.compareTo(a.volume);
+        });
+      }
+    }
 
     return Padding(
       padding: EdgeInsets.all(10),

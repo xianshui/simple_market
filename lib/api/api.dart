@@ -6,6 +6,28 @@ class MarketRecord {
   final double volume;
 
   MarketRecord(this.base, this.quote, this.type, this.lastPrice, this.volume);
+
+  int getBasePriority() {
+    if (base == 'BTC') {
+      return 3;
+    } else if (base == 'ETH') {
+      return 2;
+    } else if (base == 'WOO') {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  int getQuotePriority() {
+    if (quote == 'USDT') {
+      return 2;
+    } else if (base == 'USDC') {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
 }
 
 class Api {
