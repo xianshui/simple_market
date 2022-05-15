@@ -134,6 +134,26 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
     );
   }
 
+  void onTapTableHeader(SortColumn newSortColumn) {
+    if (sortColumn != newSortColumn) {
+      setState(() {
+        sortColumn = newSortColumn;
+        sortRule = SortRule.ascending;
+      });
+    } else {
+      if (sortRule == SortRule.ascending) {
+        setState(() {
+          sortRule = SortRule.descending;
+        });
+      } else if (sortRule == SortRule.descending) {
+        setState(() {
+          sortRule = SortRule.defaulting;
+          sortColumn = SortColumn.none;
+        });
+      }
+    }
+  }
+
   Widget buildTable(int tabIndex) {
     final filteredRecords = marketRecords.where((e) {
       if (tabIndex == 1) {
@@ -151,7 +171,6 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
         : filteredRecords.where((e) {
             return e.base.contains(keyword);
           }).toList();
-    List<MarketRecord> sortedRecords;
 
     if (sortColumn == SortColumn.none) {
       if (tabIndex == 0) {
@@ -167,25 +186,57 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
           return b.volume.compareTo(a.volume);
         });
       }
+    } else if (sortColumn == SortColumn.symbol) {
+      searchedRecords.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? '${a.base}${a.quote}${a.type}'
+                .compareTo('${b.base}${b.quote}${b.type}')
+            : '${b.base}${b.quote}${b.type}'
+                .compareTo('${a.base}${a.quote}${a.type}');
+      });
+    } else if (sortColumn == SortColumn.lastPrice) {
+      searchedRecords.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? a.lastPrice.compareTo(b.lastPrice)
+            : b.lastPrice.compareTo(a.lastPrice);
+      });
+    } else if (sortColumn == SortColumn.volume) {
+      searchedRecords.sort((a, b) {
+        return sortRule == SortRule.ascending
+            ? a.volume.compareTo(b.volume)
+            : b.volume.compareTo(a.volume);
+      });
     }
 
     return Padding(
-      padding: EdgeInsets.all(10),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Symbol',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              TableHeaderItem(
+                title: 'Symbol',
+                onTap: () => onTapTableHeader(SortColumn.symbol),
+                bgColor: sortColumn == SortColumn.symbol
+                    ? getTableHeaderBgColor(sortRule)
+                    : Colors.white,
               ),
-              Text('Last Price', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text('Volume', style: TextStyle(fontWeight: FontWeight.bold)),
+              TableHeaderItem(
+                title: 'Last Price',
+                onTap: () => onTapTableHeader(SortColumn.lastPrice),
+                bgColor: sortColumn == SortColumn.lastPrice
+                    ? getTableHeaderBgColor(sortRule)
+                    : Colors.white,
+              ),
+              TableHeaderItem(
+                title: 'Volume',
+                onTap: () => onTapTableHeader(SortColumn.volume),
+                bgColor: sortColumn == SortColumn.volume
+                    ? getTableHeaderBgColor(sortRule)
+                    : Colors.white,
+              ),
             ],
-          ),
-          SizedBox(
-            height: 10,
           ),
           Divider(
             color: Colors.grey,
@@ -205,6 +256,14 @@ class _MarketPageState extends State<MarketPage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  static Color getTableHeaderBgColor(SortRule sortRule) {
+    return sortRule == SortRule.ascending
+        ? AppColors.secondary1
+        : (sortRule == SortRule.descending
+            ? AppColors.secondary2
+            : Colors.white);
   }
 }
 
@@ -243,6 +302,31 @@ class MarketRecordItem extends StatelessWidget {
             child: Text('\$${numberCompact.format(marketRecord.volume)}'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TableHeaderItem extends StatelessWidget {
+  final String title;
+  final void Function() onTap;
+  final Color bgColor;
+  const TableHeaderItem(
+      {Key? key,
+      required this.title,
+      required this.onTap,
+      this.bgColor = Colors.white})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+            color: bgColor, borderRadius: BorderRadius.all(Radius.circular(8))),
+        padding: EdgeInsets.all(10),
+        child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
